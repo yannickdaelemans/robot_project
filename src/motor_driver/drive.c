@@ -4,6 +4,7 @@ static const char *TAG = "drive TASK";
 
 const struct direction go_forward = {1,0};
 const struct direction go_back = {0,1};
+const struct direction stand_still = {0,0};
 
 void motor_init(void){
     motor_GPIO_init();
@@ -42,19 +43,32 @@ void motor_turn_right(void){
     motor_pwm_set(0.5, 0.5);
 }
 
-void move_motor_floats(float left, float right){
+void move_motor_floats(float up, float side){
+    // if up is possitive, you can go forward, otherwise go backwards
     dir dir_left = go_forward;
-    //dir_left = {.pin1 = 1, .pin2 = 0};
     dir dir_right = go_forward;
-    if(left < 1){
-        left = fabsf(left);
+
+    float right = (fabsf(up) - side);
+    float left =  (fabsf(up) + side);
+
+    if (left < 0){
         dir_left = go_back;
-    }
-    if(right < 1){
-        right = fabsf(right);
+    } 
+    if (right < 0){
         dir_right = go_back;
     }
-    move_motor(dir_left, left, dir_right, right);
+    if (left < 0 || left > 0){
+        left = 1;
+    }
+    if (right < 0 || right > 0){
+        right = 1;
+    }
+    if(up == 0 && side == 0){
+        dir_left = stand_still;
+        dir_right = stand_still;
+    }
+
+    move_motor(dir_left, fabsf(left), dir_right, fabsf(right));
 }
 
 void move_motor(dir dir_left, float pwm_left,
