@@ -14,6 +14,6 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
-httpd_handle_t start_webserver(void);
+httpd_handle_t start_webserver(QueueHandle_t queue);
 void stop_webserver(httpd_handle_t server);
 int put_in_buffer(float *pointer_float_buf, char* buf, size_t len);

@@ -1,3 +1,12 @@
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "freertos/queue.h"
+#include "esp_system.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_log.h"
+
 #include "pwm.h"
 #include "motor_gpio.h"
 #include "driver/gpio.h"
@@ -23,3 +32,4 @@ void motor_turn_right(void);
 void move_motor_floats(float left, float right);
 void move_motor(struct direction dir_left, float pwm_left,
                 struct direction dir_right, float pwm_right);
+void vTask_drive_motor( void * pvParameters );

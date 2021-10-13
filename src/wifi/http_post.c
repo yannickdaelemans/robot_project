@@ -1,6 +1,7 @@
 #include "http_post.h"
 
 static const char *TAG = "server station";
+QueueHandle_t task_Queue = NULL;
 
 // Look at website: https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/protocols/esp_http_server.html
 
@@ -86,8 +87,10 @@ httpd_uri_t uri_post = {
 };
 
 /* Function for starting the webserver */
-httpd_handle_t start_webserver(void)
+httpd_handle_t start_webserver(QueueHandle_t queue)
 {
+    // assign the queue
+    task_Queue = queue;
     /* Generate default configuration */
     // server port 80
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -130,9 +133,17 @@ int put_in_buffer(float *pointer_float_buf, char* buf, size_t len){
         intermediate_two [j] = *(buf++);
         j++;
     }
+    float one_buf = strtof(intermediate_one, NULL);
+    float two_buf = strtof(intermediate_two, NULL);
+    *pointer_float_buf = one_buf;
+    *(pointer_float_buf+1) = two_buf;
 
-    *pointer_float_buf = strtof(intermediate_one, NULL);
-    *(pointer_float_buf+1) = strtof(intermediate_two, NULL);
+    if(xQueueSendToBack( task_Queue, ( float * ) &two_buf, 0 ) && xQueueSendToBack( task_Queue, ( float * ) &one_buf, 0 )){
+        ESP_LOGI(TAG, "put data in the queue");
+    } else{
+        ESP_LOGI(TAG, "FAILED to put data in the queue");
+        return 0;
+    }
 
     return 1;
 }

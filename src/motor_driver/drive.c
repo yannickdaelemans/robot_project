@@ -1,5 +1,7 @@
 #include "drive.h"
 
+static const char *TAG = "drive TASK";
+
 const struct direction go_forward = {1,0};
 const struct direction go_back = {0,1};
 
@@ -60,4 +62,35 @@ void move_motor(dir dir_left, float pwm_left,
     motor_pwm_set(pwm_left, pwm_right);
     change_direction (RIGHT, dir_right);
     change_direction (LEFT, dir_left);
+}
+
+// Task to be created.
+void vTask_drive_motor( void * pvParameters ){
+    ESP_LOGI(TAG, "start task");
+    QueueHandle_t task_queue = *(QueueHandle_t*) pvParameters;
+    static float buffer [2];
+    ESP_LOGI(TAG, "queue created here");
+    
+    while(1){
+        // Task code goes here.
+        ESP_LOGI(TAG, "inside while loop");
+        int number_waiting = uxQueueMessagesWaiting(task_queue);
+        ESP_LOGI(TAG, "inside queue %d", number_waiting);
+        if (number_waiting < 2 ){
+            ESP_LOGI(TAG, "waiting for queue, in queue %d", number_waiting);
+        } else{
+            int read_buf_one = xQueueReceive(task_queue, &buffer[0], 0);
+            int read_buf_two = xQueueReceive(task_queue, &buffer[1], 0);
+            if(read_buf_one && read_buf_two){
+                ESP_LOGI(TAG, "received data from queue");
+                ESP_LOGI(TAG, "floats in buffer %f and %f", buffer[0], buffer[1]);
+                move_motor_floats(buffer[0], buffer[1]);
+            } else {
+                ESP_LOGI(TAG, "error getting data from queue");
+                ESP_LOGI(TAG, "return values queue: %d %d", read_buf_one, read_buf_two);
+            }
+        }
+
+    }
+
 }
